@@ -16,9 +16,25 @@ export interface Client {
   phone?: string | null;
   email?: string | null;
   segment?: string | null;
+  contactPerson?: string | null;
+  address?: string | null;
+  notes?: string | null;
   ownerName?: string | null;
   createdAt: string;
 }
+
+export type ClientInput = {
+  name: string;
+  type: ClientType;
+  inn?: string | null;
+  pinfl?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  segment?: string | null;
+  contactPerson?: string | null;
+  address?: string | null;
+  notes?: string | null;
+};
 
 // Соответствует enum deal_stage из 0001_init.sql
 export type DealStageCode = 'lead' | 'nego' | 'kp' | 'dog' | 'opl' | 'won' | 'lost';

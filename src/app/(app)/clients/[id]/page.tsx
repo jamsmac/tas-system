@@ -1,9 +1,13 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { PageHeader } from '@/components/ui/page-header';
-import { StatusBadge } from '@/components/ui/status-badge';
+import { requireUser } from '@/lib/auth/current-user';
 import { getClient } from '@/lib/db/queries/clients';
 import { formatDate } from '@/lib/utils/format';
+
+import { deleteClientAction, updateClientAction } from '../actions';
+import { ClientForm } from '../client-form';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -11,49 +15,46 @@ interface Props {
 
 export default async function ClientDetailPage({ params }: Props) {
   const { id } = await params;
-  const client = await getClient(id);
+  const user = await requireUser();
+  const client = await getClient(user.userId, id);
   if (!client) notFound();
+
+  const updateBound = updateClientAction.bind(null, id);
 
   return (
     <div className="p-6 space-y-6">
       <PageHeader
         title={client.name}
         icon="👤"
-        subtitle={`ID ${client.id} · создан ${formatDate(client.createdAt)}`}
+        subtitle={`Создан ${formatDate(client.createdAt)} · ${client.ownerName ?? '—'}`}
+        actions={
+          <div className="flex items-center gap-2">
+            <Link
+              href="/clients"
+              className="px-3 py-2 bg-bg-2 text-navy rounded-lg text-sm font-medium hover:bg-bg transition-colors"
+            >
+              ← К списку
+            </Link>
+            {/* Delete — отдельный <form>, ВНЕ ClientForm чтобы избежать nested-form */}
+            <form action={deleteClientAction}>
+              <input type="hidden" name="id" value={client.id} />
+              <button
+                type="submit"
+                className="px-3 py-2 bg-danger/10 border border-danger/30 text-danger rounded-lg text-sm font-bold hover:bg-danger/20 transition-colors cursor-pointer"
+              >
+                🗑 Удалить
+              </button>
+            </form>
+          </div>
+        }
       />
 
-      <section className="bg-white border border-bg-2 rounded-2xl p-6">
-        <h2 className="font-display font-bold text-navy mb-4">Реквизиты</h2>
-        <dl className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3 text-sm">
-          <Field label="Тип">
-            <StatusBadge tone={client.type === 'b2b' ? 'info' : 'gold'}>
-              {client.type === 'b2b' ? 'B2B' : 'B2C'}
-            </StatusBadge>
-          </Field>
-          <Field label="ИНН">{client.inn ?? '—'}</Field>
-          <Field label="ПИНФЛ">{client.pinfl ?? '—'}</Field>
-          <Field label="Телефон">{client.phone ?? '—'}</Field>
-          <Field label="Email">{client.email ?? '—'}</Field>
-          <Field label="Сегмент">{client.segment ?? '—'}</Field>
-          <Field label="Менеджер">{client.ownerName ?? '—'}</Field>
-        </dl>
-      </section>
-
-      <section className="bg-white border border-bg-2 rounded-2xl p-6">
-        <h2 className="font-display font-bold text-navy mb-2">Активность</h2>
-        <p className="text-sm text-text-mid">
-          В Phase 3 здесь появятся вкладки: сделки, договоры, задачи, заявки на сервис, документы.
-        </p>
-      </section>
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <dt className="text-[11px] uppercase tracking-wider text-text-mid">{label}</dt>
-      <dd className="font-medium text-navy">{children}</dd>
+      <ClientForm
+        action={updateBound}
+        initial={client}
+        submitLabel="Сохранить"
+        cancelHref="/clients"
+      />
     </div>
   );
 }
