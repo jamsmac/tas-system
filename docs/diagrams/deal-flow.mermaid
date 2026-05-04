@@ -1,0 +1,40 @@
+%% Жизненный цикл сделки (deal pipeline)
+stateDiagram-v2
+    [*] --> Lead: создан лид
+
+    Lead --> Qualified: квалифицирован
+    Lead --> Lost: дисквалифицирован
+
+    Qualified --> ProposalSent: отправлено КП
+    Qualified --> Lost
+
+    ProposalSent --> Negotiation: переговоры
+    ProposalSent --> Lost
+
+    Negotiation --> ContractDrafted: проект договора
+    Negotiation --> Lost
+
+    ContractDrafted --> ContractSigned: подписан
+    ContractDrafted --> Lost
+
+    ContractSigned --> Reserved: товар зарезервирован
+    Reserved --> Shipped: отгрузка
+    Shipped --> Invoiced: счёт выставлен
+    Invoiced --> Paid: оплата получена
+
+    Paid --> Won
+    Won --> [*]
+    Lost --> [*]
+
+    note right of Reserved
+        stock_movements: op=reserve
+    end note
+    note right of Shipped
+        stock_movements: op=out
+    end note
+    note right of Invoiced
+        invoices.status = sent
+    end note
+    note right of Paid
+        payments.direction = in
+    end note

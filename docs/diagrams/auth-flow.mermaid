@@ -1,0 +1,30 @@
+%% Auth flow: Supabase Auth + Next.js 16 proxy
+sequenceDiagram
+    actor U as Пользователь
+    participant B as Браузер
+    participant P as proxy.ts<br/>(Next 16 Edge)
+    participant SR as Server Component<br/>(/dashboard)
+    participant SS as lib/supabase/server.ts
+    participant SA as Supabase Auth
+
+    U->>B: Открывает /dashboard
+    B->>P: GET /dashboard (cookies)
+    P->>SA: getUser() через @supabase/ssr
+    alt Сессии нет
+        SA-->>P: user = null
+        P-->>B: 302 → /login
+        B->>U: Форма входа
+        U->>B: email + password
+        B->>SA: signInWithPassword
+        SA-->>B: Set-Cookie: sb-*
+        B->>P: GET /dashboard
+        P->>SA: getUser()
+        SA-->>P: user OK
+    end
+    P->>P: refresh access token, set cookies
+    P-->>SR: пропустить запрос
+    SR->>SS: createClient() из cookies()
+    SS-->>SR: supabase client (auth context уже в cookies)
+    SR->>SA: select * from profiles where id=auth.uid()
+    SA-->>SR: profile + RLS-фильтрованные данные
+    SR-->>B: HTML дашборда

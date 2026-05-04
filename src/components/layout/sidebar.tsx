@@ -18,6 +18,7 @@ const NAV = [
     section: 'Операции',
     items: [
       { href: '/warehouse', icon: '📦', label: 'Склад' },
+      { href: '/service', icon: '🛠️', label: 'Сервис' },
       { href: '/finance', icon: '💰', label: 'Финансы' },
       { href: '/analytics', icon: '📈', label: 'Аналитика' },
     ],

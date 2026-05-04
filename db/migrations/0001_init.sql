@@ -1,10 +1,11 @@
 -- ════════════════════════════════════════════════════════════════
---  TAS System — initial schema
---  Phase 1: organizations, profiles, clients, deals, tasks,
+--  TAS System — initial schema (plain Postgres, no Supabase)
+--  Phase 1: organizations, users, profiles, clients, deals, tasks,
 --           contracts, audit_logs + RLS policies
 -- ════════════════════════════════════════════════════════════════
 
 create extension if not exists pgcrypto;
+create extension if not exists citext;
 
 -- ─── ENUMS ──────────────────────────────────────────────────────
 create type user_role as enum ('admin', 'manager', 'viewer');
@@ -22,9 +23,20 @@ create table organizations (
   created_at timestamptz not null default now()
 );
 
--- ─── PROFILES (extends auth.users) ──────────────────────────────
+-- ─── USERS (own auth, заменяет auth.users из Supabase) ──────────
+create table users (
+  id uuid primary key default gen_random_uuid(),
+  email citext not null unique,
+  password_hash text not null,        -- bcrypt/argon2, null до первой установки
+  totp_secret text,                   -- 2FA enrollment
+  email_verified_at timestamptz,
+  last_login_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+-- ─── PROFILES (расширение users в организации) ──────────────────
 create table profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
+  id uuid primary key references users(id) on delete cascade,
   organization_id uuid not null references organizations(id) on delete restrict,
   full_name text not null,
   role user_role not null default 'manager',
@@ -133,27 +145,35 @@ create index audit_logs_org_created_idx on audit_logs(organization_id, created_a
 
 -- ════════════════════════════════════════════════════════════════
 --  ROW LEVEL SECURITY
+--  Контекст устанавливается приложением:
+--    SET LOCAL app.current_user_id = '<uuid>';
 -- ════════════════════════════════════════════════════════════════
 
 alter table organizations enable row level security;
-alter table profiles enable row level security;
-alter table clients enable row level security;
-alter table deals enable row level security;
-alter table tasks enable row level security;
-alter table contracts enable row level security;
-alter table audit_logs enable row level security;
+alter table profiles      enable row level security;
+alter table clients       enable row level security;
+alter table deals         enable row level security;
+alter table tasks         enable row level security;
+alter table contracts     enable row level security;
+alter table audit_logs    enable row level security;
 
--- Helper: текущая организация юзера
-create or replace function current_org_id() returns uuid
-  language sql stable security definer
+-- Helper functions: читают session vars, выставленные приложением
+create or replace function current_user_id() returns uuid
+  language sql stable
 as $$
-  select organization_id from profiles where id = auth.uid()
+  select nullif(current_setting('app.current_user_id', true), '')::uuid
+$$;
+
+create or replace function current_org_id() returns uuid
+  language sql stable security definer set search_path = public
+as $$
+  select organization_id from profiles where id = current_user_id()
 $$;
 
 create or replace function current_user_role() returns user_role
-  language sql stable security definer
+  language sql stable security definer set search_path = public
 as $$
-  select role from profiles where id = auth.uid()
+  select role from profiles where id = current_user_id()
 $$;
 
 -- ─── ORGANIZATIONS ──────────────────────────────────────────────
@@ -161,11 +181,11 @@ create policy "users see own org" on organizations
   for select using (id = current_org_id());
 
 -- ─── PROFILES ───────────────────────────────────────────────────
-create policy "users see profiles in own org" on profiles
+create policy "profiles in own org" on profiles
   for select using (organization_id = current_org_id());
 
-create policy "users update own profile" on profiles
-  for update using (id = auth.uid());
+create policy "update own profile" on profiles
+  for update using (id = current_user_id());
 
 create policy "admin manages profiles" on profiles
   for all using (organization_id = current_org_id() and current_user_role() = 'admin');
@@ -198,11 +218,11 @@ begin
   return new;
 end $$;
 
-create trigger profiles_updated before update on profiles
+create trigger profiles_updated  before update on profiles
   for each row execute function set_updated_at();
-create trigger clients_updated before update on clients
+create trigger clients_updated   before update on clients
   for each row execute function set_updated_at();
-create trigger deals_updated before update on deals
+create trigger deals_updated     before update on deals
   for each row execute function set_updated_at();
 create trigger contracts_updated before update on contracts
   for each row execute function set_updated_at();

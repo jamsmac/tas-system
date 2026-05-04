@@ -1,0 +1,385 @@
+%% TAS System — ER-диаграмма
+%% Принципы:
+%%   PK   - первичный ключ
+%%   FK   - внешний ключ
+%%   UQ   - уникальный
+%%   везде есть created_at, updated_at, deleted_at (soft delete) — не показано для краткости
+
+erDiagram
+    profiles ||--o{ user_roles : has
+    roles ||--o{ user_roles : assigned
+
+    profiles {
+        uuid id PK "FK auth.users"
+        text full_name
+        text phone
+        text avatar_url
+        text status "active|disabled"
+    }
+
+    roles {
+        uuid id PK
+        text code UK "admin|sales|warehouse|tech|accountant|viewer"
+        text name
+    }
+
+    user_roles {
+        uuid user_id FK
+        uuid role_id FK
+    }
+
+    clients ||--o{ client_contacts : has
+    clients ||--o{ deals : owns
+    clients ||--o{ contracts : signs
+    clients ||--o{ invoices : billed
+    clients ||--o{ equipment : owns_units
+    profiles ||--o{ clients : assigned_to
+
+    clients {
+        uuid id PK
+        text type "b2b|b2c"
+        text name
+        text inn
+        text pinfl
+        text phone
+        text email
+        text address
+        text segment
+        uuid owner_id FK
+    }
+
+    client_contacts {
+        uuid id PK
+        uuid client_id FK
+        text full_name
+        text position
+        text phone
+        text email
+    }
+
+    deal_stages ||--o{ deals : flows
+    deal_stages {
+        uuid id PK
+        text code UK
+        text name
+        int order_index
+        bool is_won
+        bool is_lost
+    }
+
+    deals ||--o{ deal_items : contains
+    deals ||--o{ tasks : generates
+    deals ||--o{ contracts : becomes
+    profiles ||--o{ deals : assigned
+
+    deals {
+        uuid id PK
+        uuid client_id FK
+        uuid stage_id FK
+        uuid owner_id FK
+        text title
+        numeric amount
+        char currency
+        date expected_close
+        text source
+    }
+
+    products ||--o{ deal_items : sold_in
+    deal_items {
+        uuid id PK
+        uuid deal_id FK
+        uuid variant_id FK
+        int quantity
+        numeric unit_price
+        numeric discount
+    }
+
+    deals ||--o{ tasks : generates
+    clients ||--o{ tasks : about
+    profiles ||--o{ tasks : assignee
+    tasks ||--o{ task_comments : has
+
+    tasks {
+        uuid id PK
+        text title
+        text description
+        text status "open|in_progress|done|cancelled"
+        text priority "low|normal|high|urgent"
+        timestamptz due_at
+        uuid assignee_id FK
+        uuid client_id FK
+        uuid deal_id FK
+        uuid ticket_id FK
+    }
+
+    task_comments {
+        uuid id PK
+        uuid task_id FK
+        uuid author_id FK
+        text body
+    }
+
+    contracts ||--o{ contract_items : specifies
+    contracts ||--o{ invoices : invoiced_by
+    contracts {
+        uuid id PK
+        text number UK
+        date signed_at
+        date expires_at
+        uuid client_id FK
+        uuid deal_id FK
+        text type "sale|service|lease"
+        text status "draft|signed|active|closed|cancelled"
+        numeric amount
+        char currency
+    }
+
+    contract_items {
+        uuid id PK
+        uuid contract_id FK
+        uuid variant_id FK
+        int quantity
+        numeric unit_price
+    }
+
+    categories ||--o{ products : groups
+    categories ||--o{ categories : parent
+
+    categories {
+        uuid id PK
+        uuid parent_id FK
+        text name
+        text slug UK
+    }
+
+    products ||--o{ product_variants : has
+    products {
+        uuid id PK
+        uuid category_id FK
+        text sku UK
+        text name
+        text brand
+        text description
+        text image_url
+    }
+
+    product_variants {
+        uuid id PK
+        uuid product_id FK
+        text variant_sku UK
+        text name
+        bool is_serial_tracked
+        numeric default_price
+    }
+
+    suppliers ||--o{ purchase_orders : supplies
+    suppliers {
+        uuid id PK
+        text name
+        text inn
+        text contact
+        text phone
+        text email
+    }
+
+    warehouses ||--o{ stock_levels : holds
+    product_variants ||--o{ stock_levels : tracked_at
+    warehouses {
+        uuid id PK
+        text code UK
+        text name
+        text address
+        text type "main|regional|service"
+    }
+
+    stock_levels {
+        uuid id PK
+        uuid warehouse_id FK
+        uuid variant_id FK
+        int quantity
+        int reserved
+    }
+
+    warehouses ||--o{ stock_movements : participates
+    product_variants ||--o{ stock_movements : item
+    profiles ||--o{ stock_movements : created_by
+
+    stock_movements {
+        uuid id PK
+        uuid variant_id FK
+        uuid warehouse_id FK
+        uuid warehouse_to_id FK
+        text op "in|out|transfer|adjust|reserve|unreserve"
+        int quantity
+        text doc_type "po|deal|ticket|adjustment"
+        uuid doc_id
+        uuid created_by FK
+    }
+
+    purchase_orders ||--o{ purchase_order_items : has
+    suppliers ||--o{ purchase_orders : from
+
+    purchase_orders {
+        uuid id PK
+        uuid supplier_id FK
+        uuid warehouse_id FK
+        text number UK
+        date order_date
+        date expected_at
+        text status "draft|sent|received|cancelled"
+        numeric total
+        char currency
+    }
+
+    purchase_order_items {
+        uuid id PK
+        uuid po_id FK
+        uuid variant_id FK
+        int quantity
+        numeric unit_price
+    }
+
+    product_variants ||--o{ equipment : units
+    clients ||--o{ equipment : owns
+    equipment ||--o{ service_tickets : services
+    equipment ||--o{ warranties : covered_by
+
+    equipment {
+        uuid id PK
+        uuid variant_id FK
+        uuid client_id FK
+        text serial_number UK
+        date purchased_at
+        text status "in_use|in_service|retired|in_stock"
+    }
+
+    warranties {
+        uuid id PK
+        uuid equipment_id FK
+        date start_at
+        date end_at
+        text terms
+    }
+
+    service_tickets ||--o{ service_ticket_parts : uses
+    profiles ||--o{ service_tickets : technician
+
+    service_tickets {
+        uuid id PK
+        text number UK
+        uuid equipment_id FK
+        uuid client_id FK
+        uuid technician_id FK
+        text type "warranty|paid|onsite"
+        text status "open|in_progress|waiting_parts|done|cancelled"
+        text problem
+        text resolution
+        timestamptz opened_at
+        timestamptz closed_at
+        numeric labor_cost
+    }
+
+    product_variants ||--o{ service_ticket_parts : part
+    service_ticket_parts {
+        uuid id PK
+        uuid ticket_id FK
+        uuid variant_id FK
+        int quantity
+        numeric unit_price
+    }
+
+    accounts ||--o{ payments : through
+    accounts {
+        uuid id PK
+        text name
+        text kind "cash|bank|card"
+        char currency
+        numeric balance
+    }
+
+    clients ||--o{ invoices : receives
+    contracts ||--o{ invoices : per
+    invoices ||--o{ invoice_items : lists
+    invoices ||--o{ payments : settled_by
+
+    invoices {
+        uuid id PK
+        text number UK
+        date issued_at
+        date due_at
+        uuid client_id FK
+        uuid contract_id FK
+        text status "draft|sent|paid|overdue|cancelled"
+        numeric subtotal
+        numeric vat_amount
+        numeric total
+        char currency
+    }
+
+    invoice_items {
+        uuid id PK
+        uuid invoice_id FK
+        uuid variant_id FK
+        int quantity
+        numeric unit_price
+        numeric vat_rate
+    }
+
+    payments {
+        uuid id PK
+        uuid account_id FK
+        uuid invoice_id FK
+        uuid expense_id FK
+        text direction "in|out"
+        numeric amount
+        char currency
+        date paid_at
+        text method "cash|wire|card"
+        text reference
+    }
+
+    expense_categories ||--o{ expenses : groups
+    expense_categories {
+        uuid id PK
+        text code UK
+        text name
+    }
+
+    expenses {
+        uuid id PK
+        uuid category_id FK
+        text title
+        numeric amount
+        char currency
+        date incurred_at
+        text status "pending|paid|cancelled"
+    }
+
+    audit_log {
+        uuid id PK
+        text entity
+        uuid entity_id
+        text action "insert|update|delete"
+        jsonb diff
+        uuid actor_id FK
+        timestamptz at
+    }
+
+    attachments {
+        uuid id PK
+        text entity
+        uuid entity_id
+        text storage_path
+        text mime_type
+        bigint size_bytes
+        uuid uploaded_by FK
+    }
+
+    notifications {
+        uuid id PK
+        uuid user_id FK
+        text title
+        text body
+        text link
+        bool is_read
+    }

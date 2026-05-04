@@ -7,30 +7,45 @@ CRM/ERP для управления продажами агро- и техобо
 
 - **Frontend:** Next.js 16 (App Router, RSC, Turbopack) + TypeScript + Tailwind 4
 - **UI:** shadcn/ui + кастомная тема (navy `#1a2744` / gold `#c9a227`)
-- **Backend:** Supabase (Postgres 15 + Auth + Realtime + Storage)
-- **Deploy:** Vercel + Supabase Cloud (Frankfurt)
+- **Backend:** Postgres 16 + `postgres-js` driver + RLS на сессионных переменных
+- **Auth:** свой (email + bcrypt + cookie session) — Phase 2
+- **Deploy:** Vercel (app) + managed Postgres (Neon/Supabase Postgres-only/Railway)
 - **Мониторинг:** Sentry + PostHog
 - **Email:** Resend
 
 ## 📐 Архитектура
 
 ```
-┌──────────────────┐      HTTPS      ┌─────────────────────┐
-│  Next.js 16 SSR  │ ─────────────→  │  Supabase           │
-│  (Vercel)        │                 │  ├─ Postgres + RLS  │
-│                  │ ←── Realtime ── │  ├─ Auth (JWT+TOTP) │
-└──────────────────┘     WebSocket   │  ├─ Storage         │
-                                     │  └─ Edge Functions  │
+┌──────────────────┐      pg wire    ┌─────────────────────┐
+│  Next.js 16 SSR  │ ─────────────→  │  Postgres 16        │
+│  (Vercel)        │   postgres-js   │  ├─ RLS via         │
+│                  │                 │  │  app.current_user_id
+│  Server Actions  │                 │  ├─ pg_cron backups │
+└──────────────────┘                 │  └─ pgAdmin (dev)   │
                                      └─────────────────────┘
 ```
 
 ## 🚀 Запуск локально
 
+Требования: Docker Desktop + Node 20+ + pnpm 10+
+
 ```bash
-pnpm install
-cp .env.example .env.local         # заполнить Supabase ключи
-pnpm dev                           # http://localhost:3000
+pnpm install                       # 1. зависимости
+cp .env.example .env.local         # 2. env (DATABASE_URL уже на localhost:5433)
+pnpm db:up                         # 3. Postgres + pgAdmin в Docker
+pnpm dev                           # 4. http://localhost:3000
 ```
+
+Сервисы:
+- App:     http://localhost:3000
+- pgAdmin: http://localhost:5050  (admin@tas.local / admin)
+- Health:  http://localhost:3000/api/health
+
+Скрипты БД:
+- `pnpm db:up`     — поднять контейнеры
+- `pnpm db:down`   — остановить (данные сохранятся)
+- `pnpm db:reset`  — снести и пересоздать с нуля (применит миграции заново)
+- `pnpm db:psql`   — открыть psql в контейнере
 
 ## 🗺 Roadmap (9 фаз, ~8-10 недель full-time)
 

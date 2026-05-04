@@ -1,0 +1,90 @@
+%% Граф зависимостей модулей TAS System
+%% Стрелка A --> B читается как «A использует данные/события B»
+
+graph LR
+    subgraph Identity[Идентичность]
+        Auth[Auth / Profiles / Roles]
+    end
+
+    subgraph CRM
+        Clients[Clients<br/>B2B + B2C]
+        Contacts[Client Contacts]
+        Deals[Deals<br/>+ Pipeline]
+        Tasks[Tasks]
+        Contracts[Contracts]
+    end
+
+    subgraph Catalog[Каталог]
+        Categories[Categories]
+        Products[Products]
+        Variants[Product Variants]
+        Suppliers[Suppliers]
+    end
+
+    subgraph Warehouse[Склад]
+        Warehouses[Warehouses]
+        Stock[Stock Levels]
+        Movements[Stock Movements]
+        PO[Purchase Orders]
+    end
+
+    subgraph Service[Сервис]
+        Equipment[Equipment<br/>серийный учёт]
+        Tickets[Service Tickets]
+        Warranty[Warranties]
+    end
+
+    subgraph Finance[Финансы]
+        Accounts[Accounts]
+        Invoices[Invoices]
+        Payments[Payments]
+        Expenses[Expenses]
+    end
+
+    subgraph System[Системные]
+        Audit[Audit Log]
+        Files[Attachments]
+        Notif[Notifications]
+    end
+
+    Auth --> CRM
+    Auth --> Warehouse
+    Auth --> Service
+    Auth --> Finance
+
+    Clients --> Contacts
+    Clients --> Deals
+    Deals --> Tasks
+    Deals --> Contracts
+    Deals --> Invoices
+
+    Categories --> Products
+    Products --> Variants
+    Variants --> Stock
+    Stock --> Movements
+    Suppliers --> PO
+    PO --> Movements
+
+    Variants --> Equipment
+    Clients --> Equipment
+    Equipment --> Tickets
+    Tickets --> Movements
+    Equipment --> Warranty
+
+    Contracts --> Invoices
+    Invoices --> Payments
+    Payments --> Accounts
+    Expenses --> Payments
+
+    CRM --> Audit
+    Warehouse --> Audit
+    Service --> Audit
+    Finance --> Audit
+
+    Tickets --> Notif
+    Tasks --> Notif
+
+    classDef domain fill:#1a2744,stroke:#c9a227,color:#fff;
+    classDef sys fill:#6b7a99,stroke:#1a2744,color:#fff;
+    class Identity,CRM,Catalog,Warehouse,Service,Finance domain;
+    class System sys;

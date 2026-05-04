@@ -1,0 +1,31 @@
+%% Жизненный цикл сервисной заявки
+stateDiagram-v2
+    [*] --> Open: заявка создана
+
+    Open --> InProgress: техник назначен
+    Open --> Cancelled: отменена клиентом
+
+    InProgress --> WaitingParts: нужны запчасти
+    InProgress --> Done: ремонт выполнен
+
+    WaitingParts --> InProgress: запчасти получены
+    WaitingParts --> Cancelled
+
+    Done --> Closed: акт подписан
+    Closed --> [*]
+    Cancelled --> [*]
+
+    note right of InProgress
+        Если type = warranty,
+        labor_cost = 0
+    end note
+
+    note right of WaitingParts
+        purchase_order создаётся,
+        ticket замораживается
+    end note
+
+    note right of Done
+        service_ticket_parts списываются:
+        stock_movements: op=out, doc=ticket
+    end note

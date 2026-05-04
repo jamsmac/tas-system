@@ -1,9 +1,9 @@
-import type { NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 
-import { updateSession } from '@/lib/supabase/middleware';
-
-export async function proxy(request: NextRequest) {
-  return updateSession(request);
+// Phase 2 (auth): здесь будет проверка cookie-сессии и редирект на /login
+// для защищённых роутов. Пока — пропускаем все запросы.
+export function proxy(_request: NextRequest) {
+  return NextResponse.next();
 }
 
 export const config = {
