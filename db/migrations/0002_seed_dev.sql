@@ -8,14 +8,16 @@ insert into organizations (id, name, slug)
 values ('00000000-0000-0000-0000-000000000001', 'TEXNIKA ADVANS SERVIS', 'tas')
 on conflict (slug) do nothing;
 
--- Users (пароли — bcrypt хеши от 'admin123' и 'manager123')
--- $2a$10$... сгенерировано: htpasswd -bnBC 10 "" admin123 | tr -d ':\n'
+-- Users (пароли — argon2id хеши от 'admin123' и 'manager123')
+-- Сгенерировано: node -e "require('@node-rs/argon2').hash(...)"
 insert into users (id, email, password_hash, email_verified_at)
 values
-  ('00000000-0000-0000-0000-0000000000a1', 'admin@tas.local',
-   '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', now()),
-  ('00000000-0000-0000-0000-0000000000a2', 'manager@tas.local',
-   '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', now())
+  ('00000000-0000-0000-0000-0000000000a1', 'admin@tas.dev',
+   '$argon2id$v=19$m=19456,t=2,p=1$p1f1B6BFKJgLN6sBAHmLEQ$gwcuLJOy2L5Agz5VE4ruCKTdRL5f9v3tMaU1H1IKsIQ',
+   now()),
+  ('00000000-0000-0000-0000-0000000000a2', 'manager@tas.dev',
+   '$argon2id$v=19$m=19456,t=2,p=1$PFj4DOCuB67Zmp6mCvt3mw$ESLI33BarGeOKSWJahzaUr2pslyvIi0sahEkFHspA8g',
+   now())
 on conflict (email) do nothing;
 
 -- Profiles

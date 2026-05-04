@@ -1,7 +1,18 @@
+import { redirect } from 'next/navigation';
+
 import { Sidebar } from '@/components/layout/sidebar';
 import { Topbar } from '@/components/layout/topbar';
+import { getCurrentUser } from '@/lib/auth/current-user';
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    // Cookie прошла Edge-proxy, но сессии в БД нет (истекла/удалена).
+    // /api/auth/clear удалит cookie (Server Component не может) + редирект на /login.
+    redirect('/api/auth/clear');
+  }
+
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar />
