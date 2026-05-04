@@ -1,17 +1,9 @@
 import 'server-only';
 
 import { withUser } from '@/lib/db';
-import type { Currency, Deal, DealStage, DealStageCode } from '@/lib/types';
+import type { Currency, Deal, DealStageCode } from '@/lib/types';
 
-export const STAGES: DealStage[] = [
-  { code: 'lead', name: 'Лид',        color: '#6b7a99' },
-  { code: 'nego', name: 'Переговоры', color: '#4a90e2' },
-  { code: 'kp',   name: 'КП',         color: '#f39c12' },
-  { code: 'dog',  name: 'Договор',    color: '#9b59b6' },
-  { code: 'opl',  name: 'Оплата',     color: '#c9a227' },
-  { code: 'won',  name: 'Выиграна',   color: '#2ecc71', isWon: true },
-  { code: 'lost', name: 'Проиграна',  color: '#e74c3c', isLost: true },
-];
+export { STAGES } from '@/lib/deal-stages';
 
 type DealRow = {
   id: string;

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useActionState } from 'react';
 
 import type { Currency, Deal, DealStageCode } from '@/lib/types';
-import { STAGES } from '@/lib/db/queries/deals';
+import { STAGES } from '@/lib/deal-stages';
 
 import type { DealFormState } from './actions';
 

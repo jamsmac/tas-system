@@ -2,9 +2,12 @@ import { PageHeader } from '@/components/ui/page-header';
 import { DataTable, type Column } from '@/components/ui/data-table';
 import { EmptyState } from '@/components/ui/empty-state';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { requireUser } from '@/lib/auth/current-user';
 import { listInvoices } from '@/lib/db/queries/finance';
 import { formatDate, formatMoney } from '@/lib/utils/format';
 import type { Invoice, InvoiceStatus } from '@/lib/types';
+
+export const dynamic = 'force-dynamic';
 
 const STATUS_NAME: Record<InvoiceStatus, string> = {
   draft: 'Черновик', sent: 'Отправлен', paid: 'Оплачен', overdue: 'Просрочен', cancelled: 'Отменён',
@@ -14,7 +17,8 @@ const STATUS_TONE: Record<InvoiceStatus, 'neutral' | 'info' | 'success' | 'dange
 };
 
 export default async function InvoicesPage() {
-  const rows = await listInvoices();
+  const user = await requireUser();
+  const rows = await listInvoices(user.userId);
 
   const columns: Column<Invoice>[] = [
     { key: 'number', header: '№', render: (r) => <span className="font-mono text-navy">{r.number}</span> },
