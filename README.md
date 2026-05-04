@@ -38,7 +38,7 @@ pnpm dev                           # 4. http://localhost:3000
 
 Сервисы:
 - App:     http://localhost:3000
-- pgAdmin: http://localhost:5050  (admin@tas.local / admin)
+- pgAdmin: http://localhost:5050  (admin@tas-system.dev / admin)
 - Health:  http://localhost:3000/api/health
 
 Скрипты БД:
