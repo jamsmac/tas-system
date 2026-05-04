@@ -1,26 +1,57 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* TAS Brand — navy + gold */
+  --navy: #1a2744;
+  --navy-dark: #111d36;
+  --navy-light: #223058;
+  --gold: #c9a227;
+  --gold-light: #e0b83a;
+  --gold-dim: rgba(201, 162, 39, 0.15);
+
+  /* Surfaces */
+  --bg: #f0ede8;
+  --bg-2: #e8e4de;
+  --surface: #ffffff;
+
+  /* Text */
+  --text: #1a2744;
+  --text-mid: #6b7a99;
+  --text-light: #a8b4cc;
+
+  /* Status */
+  --green: #2ecc71;
+  --red: #e74c3c;
+  --orange: #f39c12;
+  --blue: #4a90e2;
+
+  /* Layout */
+  --sidebar-w: 230px;
+  --topbar-h: 56px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-navy: var(--navy);
+  --color-navy-dark: var(--navy-dark);
+  --color-navy-light: var(--navy-light);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-bg: var(--bg);
+  --color-bg-2: var(--bg-2);
+  --color-text-mid: var(--text-mid);
+  --color-text-light: var(--text-light);
+  --color-success: var(--green);
+  --color-danger: var(--red);
+  --color-warning: var(--orange);
+  --color-info: var(--blue);
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Raleway', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
 }
