@@ -14,11 +14,14 @@
     "db:psql": "docker exec -it tas_postgres psql -U tas -d tas_dev"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
     "@node-rs/argon2": "^2.0.2",
     "next": "16.2.4",
     "postgres": "^3.4.9",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "recharts": "^3.8.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
